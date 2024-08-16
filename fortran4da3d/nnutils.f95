@@ -1,6 +1,5 @@
 !-----------------------------------------------------------------------------------------
-subroutine initialize(mlon, mlat, mprs, mobs, loni, lati, aki, bki, psi, xbi, &
-                      obsloni, obslati, obsprsi, obsvali, iflag)
+subroutine initialize(mlon, mlat, mprs, loni, lati, prsi, xai, xbi, iflag)
   use nn4da3d
   implicit none
 
@@ -8,10 +7,8 @@ subroutine initialize(mlon, mlat, mprs, mobs, loni, lati, aki, bki, psi, xbi, &
 
   real, dimension(mlon), intent(in) :: loni
   real, dimension(mlat), intent(in) :: lati
-  real, dimension(mprs+1), intent(in) :: aki, bki
-  real, dimension(mlat, mlon), intent(in) :: psi
-  real, dimension(mprs, mlat, mlon), intent(in) :: xbi
-  real, dimension(mobs), intent(in) :: obsloni, obslati, obsprsi, obsvali
+  real, dimension(mprs), intent(in) :: prsi
+  real, dimension(mprs, mlat, mlon), intent(in) :: xai, xbi
 
   integer, intent(out) :: iflag
 

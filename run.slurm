@@ -1,55 +1,30 @@
 #!/bin/sh
 #SBATCH -t 06:00:00
-#SBATCH -A gsienkf
+#SBATCH -A ${USER}
 #SBATCH -N 1
-#SBATCH --ntasks-per-node=40
-#SBATCH -p bigmem
-#SBATCH -J mlcrtm
-#SBATCH -e log.crtm.%J.err
-#SBATCH -o log.crtm.%J.out
+#SBATCH --ntasks-per-node=36
+#SBATCH -J mlw
+#SBATCH -e log.mlw.%J.err
+#SBATCH -o log.mlw.%J.out
 
- source ~/pythonenv
-
- cd /work/noaa/gsienkf/weihuang/src/mlcrtm
+ cd /contrib/Wei.Huang/src/mlweather
 
  source date.env
 
  predatestr=$curdate
-#predatestr=2022010700
- interval=6
+ curdatestr=${predatestr}
 
- if [ -f saved.weight/crtm_weight_${predatestr}.nc ]
- then
-   ln -sf saved.weight/crtm_weight_${predatestr}.nc pre-crtm_weight.nc
-#else
-#  echo "There is no good weight file: ${flnm}. exit..."
-#  exit -1
- fi
-
- export OMP_NUM_THREADS=36
-#export OMP_NUM_THREADS=1
-
- curdatestr=`incdate.sh ${predatestr} ${interval}`
-
- python mlcrtm.py --interval 6 \
-	--dirname /work2/noaa/da/weihuang/EMC_cycling/jedi-cycling \
+ python mlweather.py --interval 3 \
+	--dirname /contrib/Wei.Huang/src/mlweather/gfsdata \
         --datestr ${curdatestr}
 
- if [ -f crtm_weight.nc ]
+ if [ -f mlw_weight.nc ]
  then
-   if [ ! -f saved.weight/crtm_weight_${curdatestr}.nc ]
+   if [ ! -f saved.weight/mlw_weight_${curdatestr}.nc ]
    then
-     mv crtm_weight.nc saved.weight/crtm_weight_${curdatestr}.nc
+     mv mlw_weight.nc saved.weight/mlw_weight_${curdatestr}.nc
    fi
-   ln -sf saved.weight/crtm_weight_${curdatestr}.nc pre-crtm_weight.nc
- fi
-
- if [ -f diagnosis.nc ]
- then
-   if [ ! -f saved.weight/diagnosis_${curdatestr}.nc ]
-   then
-     mv diagnosis.nc saved.weight/diagnosis_${curdatestr}.nc
-   fi
+   ln -sf saved.weight/mlw_weight_${curdatestr}.nc pre-mlw_weight.nc
  fi
 
  if [ "$predatestr" -le "$enddate" ]

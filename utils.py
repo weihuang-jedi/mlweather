@@ -76,9 +76,10 @@ def get_grid_data(filename):
     sys.exit(-1)
 
   ncgrid = netCDF4.Dataset(filename)
-  lat = ncgrid.variables['lat'][:,:]
-  lon = ncgrid.variables['lon'][:,:]
-  tmp = ncgrid.variables['tmp'][0,:,:,:]
+  lat = ncgrid.variables['lat_0'][:]
+  lon = ncgrid.variables['lon_0'][:]
+  prs = ncgrid.variables['lv_ISBL0'][:]
+  tmp = ncgrid.variables['TMP_P0_L100_GLL0'][:,:,:]
 
   print('lat.shape', lat.shape)
   print('lon.shape', lon.shape)
@@ -90,57 +91,7 @@ def get_grid_data(filename):
 
   ncgrid.close()
 
-  return lat[:,0], lon[0,:], tmp
-
-#-------------------------------------------------------------------------------------
-def get_obs_data(obsfile, debug=0, channel=0):
-  if(not os.path.exists(obsfile)):
-    print('File %s does not exist. Stop' %(obsfile))
-    sys.exit(-1)
-
-  ncobs = ReadIODA2Obs(debug=debug, filename=obsfile)
-  rawlat, rawlon = ncobs.get_latlon()
- #varname = '/MetaData/pressure'
- #varname = '/MetaData/height'
- #rawprs = ncobs.get_var(varname)
-  varname = '/ObsValue/brightnessTemperature'
-  rawval = ncobs.get_2d_var(varname)
- #varname = '/GsiHofX/brightnessTemperature'
-  varname = '/GsiHofXBc/brightnessTemperature'
-  rawgsi = ncobs.get_2d_var(varname)
-  varname = '/PreQC/brightnessTemperature'
-  raw_qc = ncobs.get_2d_var(varname)
-  ncobs.close()
-
-  nlocs, nchannels = rawval.shape
-
-  idxlist = []
-
-  for n in range(nlocs):
-   #if(np.isnan(rawval[n,channel])):
-    if(math.isnan(rawval[n,channel])):
-      continue
-    idxlist.append(n)
-
-  nv = len(idxlist)
-  obslon = np.ndarray((nv, ), dtype=float)
-  obslat = np.ndarray((nv, ), dtype=float)
-  obsval = np.ndarray((nv, nchannels), dtype=float)
-  gsihox = np.ndarray((nv, nchannels), dtype=float)
-  obs_qc = np.ndarray((nv, nchannels), dtype=float)
-  
-  for i in range(nv):
-    n = idxlist[i]
-    obslon[i] = rawlon[n]
-    obslat[i] = rawlat[n]
-    obsval[i,:] = rawval[n,:]
-    gsihox[i,:] = gsihox[n,:]
-    obs_qc[i,:] = raw_qc[n,:]
-
- #for n in range(len(obslat)):
- #  print('No %d: lat %f lon %f tmp %f' %(n, obslon[n], obslat[n], obsval[n,0]))
-
-  return obslon, obslat, obsval, gsihox, obs_qc
+  return lat, lon, prs, tmp
 
 #===================================================================================
 if __name__== '__main__':
@@ -161,17 +112,16 @@ if __name__== '__main__':
 
   filename = '%s/%s/sanl_%s_fhr06_ensmean' %(dirname, datestr, datestr)
 
-  lat, lon, tmp = get_grid_data(filename)
+  lat, lon, prs, tmp = get_grid_data(filename)
 
-  nlev, nlat, nlon = tmp.shape
-
- #for j in range(0, nlat, 20):
- #  for i in range(0, nlon, 20):
- #    print('lon %f, lat %f, t %f' %(lon[j,i], lat[j,i], tmp[nlev-1,j,i]))
-
-  for j in range(0, nlat, 20):
-    print('lat %f, t %f' %(lat[j], tmp[nlev-1,j,0]))
+  nlev, nlat, nprs, nlon = tmp.shape
 
   for i in range(0, nlon, 20):
-    print('lon %f, t %f' %(lon[i], tmp[nlev-1,0,i]))
+    print('#%d: lon %f, t %f' %(i, lon[i]))
+
+  for j in range(0, nlat, 20):
+    print('#%d: lat %f, t %f' %(j, lat[j]))
+
+  for k in range(nprs):
+    print('Prs %d: %f' %(k, prs[k-1]))
 

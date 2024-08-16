@@ -3,7 +3,7 @@ import os, sys
 import math
 import numpy as np
 
-import nnutils
+#import nnutils
 import utils
 
 from plotUtils import PlotResult
@@ -13,8 +13,7 @@ from weightHandler import DiagnosisWriter
 
 #==================================================================================
 class NeuralNetwork(object):
-  def __init__(self, lon, lat, xb, obslon, obslat,
-               obsval, gsihofx, obs_qc, debug=1):
+  def __init__(self, lon, lat, prs, xa, xb, debug=1):
    #parameters
     self.debug = 1
     self.prev_cost = 1.0e+21
@@ -26,25 +25,15 @@ class NeuralNetwork(object):
 
     self.lon = lon
     self.lat = lat
-    self.xa = np.copy(xb)
+    self.prs = prs
+    self.xa = np.copy(xa)
     self.xb = xb
-    self.obslon = obslon
-    self.obslat = obslat
-    self.obsval = obsval
-    self.obs_qc = obs_qc
-    self.gsihofx = gsihofx
 
-    self.obsanl = np.copy(obsval)
-
-    self.nlev, self.nlat, self.nlon = xb.shape
+    self.nprs, self.nlat, self.nlon = xb.shape
     self.nwidth = 3
     self.ndepth = 3
-    self.layer1depth = self.nlev
-    self.nobs, self.layer2depth = obsval.shape
-    self.nchn = self.layer2depth
 
-    print('nlon: %d, nlat: %d, nlev: %d' %(self.nlon, self.nlat, self.nlev))
-    print('nobs: %d, layer2depth: %d' %(self.nobs, self.layer2depth))
+    print('nlon: %d, nlat: %d, nprs: %d' %(self.nlon, self.nlat, self.nprs))
 
     print('lon.shape = ', lon.shape)
     print('lat.shape = ', lat.shape)
@@ -58,9 +47,8 @@ class NeuralNetwork(object):
     self.diagnosiswriter = DiagnosisWriter(debug=self.debug)
 
    #print(nnutils.initialize.__doc__)
-    rc = nnutils.initialize(lon, lat, xb, obslon, obslat, obsval, obs_qc,
-                            self.nlon, self.nlat, self.nlev,
-                            self.nobs, self.layer2depth)
+    rc = nnutils.initialize(lon, lat, prs, xa, xb,
+                            self.nlon, self.nlat, self.nprs)
     rc = nnutils.initialize_layer1(self.layer1depth)
     rc = nnutils.initialize_layer2(self.layer2depth)
 

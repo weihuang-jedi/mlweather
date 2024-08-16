@@ -8,10 +8,8 @@ from dateutil.parser import *
 from datetime import *
 from datetime import timedelta
 
-import nnutils
+#import nnutils
 import utils
-
-from plotUtils import PlotResult
 
 from neuralnetwork import NeuralNetwork
 
@@ -44,8 +42,8 @@ output = 1
 errmin = 1.0e-4
 iteration_max = 20
 interval = 6
-dirname = '/work2/noaa/da/weihuang/EMC_cycling/jedi-cycling'
-datestr = '2022010400'
+dirname = '/contrib/Wei.Huang/src/mlweather'
+datestr = '2024080100'
 akbkfile = './data/akbk127.nc4'
 
 opts, args = getopt.getopt(sys.argv[1:], '', ['debug=', 'output=',
@@ -69,32 +67,48 @@ for o, a in opts:
   else:
     assert False, 'unhandled option'
 
-filename = '%s/%s/sfg_%s_fhr06_ensmean' %(dirname, datestr, datestr)
-obsfile = '%s/%s/ioda_v2_data/amsua_n19_obs_%s.nc4' %(dirname, datestr, datestr)
+#-------------------------------------------------------------------------------------------
+print('datestr: %s' %(datestr))
+print('ymdstr: %s, hourstr: %s' %(ymdstr, hourstr))
 
+filename = '%s/gfs_3_%s_0000_0%s.nc' %(dirname, ymdstr, hourstr)
+
+print('filenmae: %s' %(filename))
+
+#-------------------------------------------------------------------------------------------
+#pr = PlotResult(output=output)
+lat, lon, prs, tmp0 = utils.get_grid_data(filename)
+
+nprs, nlat, nlon = tmp0.shape
+
+for i in range(0, nlon, 20):
+  print('#%d: lon %f' %(i, lon[i]))
+
+for j in range(0, nlat, 20):
+  print('#%d: lat %f' %(j, lat[j]))
+
+for k in range(nprs):
+  print('Prs %d: %f' %(k, prs[k-1]))
+
+#-------------------------------------------------------------------------------------------
 newdatestr = advancedate(datestr, interval)
-print('datestr: %s, newdatestr: %s' %(datestr, newdatestr))
+ymdstr = newdatestr[0:8]
+hourstr = newdatestr[8:]
 
-#sys.exit(-1)
+print('newdatestr: %s' %(newdatestr))
+print('ymdstr: %s, hourstr: %s' %(ymdstr, hourstr))
+
+filename = '%s/gfs_3_%s_0000_0%s.nc' %(dirname, ymdstr, hourstr)
+
+print('filenmae: %s' %(filename))
+
+lat, lon, prs, tmp1 = utils.get_grid_data(filename)
+
 #-------------------------------------------------------------------------------------------
-pr = PlotResult(output=output)
-lat, lon, tmp = utils.get_grid_data(filename)
-obslon, obslat, obsval, gsihofx, obs_qc = utils.get_obs_data(obsfile)
-
-#-------------------------------------------------------------------------------------------
-title = 'Initial background and Ideal Goal Analysis'
-imagename = 'initial_field.png'
-
-pr.set_title(title)
-pr.set_imagename(imagename)
-pr.set_obs_lonlat(obslon, obslat)
-
-#------------------------------------------------------------------------
-NN = NeuralNetwork(lon, lat, tmp, obslon, obslat, obsval,
-                   gsihofx, obs_qc, debug=debug)
+NN = NeuralNetwork(lon, lat, prs, tmp0, tmp1, debug=debug)
 precost = 1.0e21
 
-NN.useSavedWeight(weightfilename='pre-crtm_weight.nc')
+NN.useSavedWeight(weightfilename='pre-mlw_weight.nc')
 
 precost = 1.0e21
 NN.set_prev_cost(precost)
@@ -125,7 +139,7 @@ while(i < iteration_max):
   step *= 1.10
  #step *= 0.999
 
-NN.save_weightNbias(filename='crtm_weight.nc')
+NN.save_weightNbias(filename='mlw_weight.nc')
 
 NN.saveDiagnosis(filename='diagnosis.nc')
 
